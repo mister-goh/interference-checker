@@ -1,0 +1,16 @@
+# 의존성 (자동 설치 — npm install 로 복원)
+node_modules/
+
+# 빌드 결과물 (npm run build 로 재생성)
+dist/
+dist-offline/
+*.tsbuildinfo
+
+# 로컬 도구 설정 / 상태
+.omc/
+.claude/
+.vscode/
+
+# OS / 에디터 부산물
+.DS_Store
+Thumbs.db

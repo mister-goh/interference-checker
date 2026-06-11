@@ -1,0 +1,597 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────
+   Theme tokens (CSS variables).
+   Base :root = LIGHT (default theme).
+   :root[data-theme="dark"] = DARK override (the original look, preserved).
+   Glassmorphism kept in both; data table stays high-contrast (WCAG AA).
+───────────────────────────────────────── */
+
+@layer base {
+  :root {
+    /* App background */
+    --app-gradient: linear-gradient(135deg, #eef2f7 0%, #e2ecf6 40%, #e9f1f9 70%, #f3f6fa 100%);
+    --orb-1: radial-gradient(circle, rgba(56, 189, 248, 0.10) 0%, transparent 70%);
+    --orb-2: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+
+    /* Text levels (collapse of the old white/XX opacities) */
+    --text-strong:   #0f172a;
+    --text:          #334155;
+    --text-muted:    #64748b;
+    --text-faint:    #94a3b8;
+    --text-faintest: #b4bdc9;
+
+    /* Accent (was text-sky-*) + state colors */
+    --accent:        #0369a1;
+    --accent-strong: #0284c7;
+    --warn:          #b45309;
+    --err:           #b91c1c;
+    --violet:        #6d28d9;
+    --pink:          #be185d;
+    --border-app:    rgba(15, 23, 42, 0.10);
+
+    /* Subtle surfaces for modal/popup (theme-aware) */
+    --surface-subtle: rgba(15, 23, 42, 0.035);
+    --surface-accent: rgba(2, 132, 199, 0.08);
+    /* Solid (opaque) panel for modals — uniform brightness, no backdrop bleed */
+    --panel-bg:     #ffffff;
+    --panel-border: rgba(15, 23, 42, 0.12);
+    --panel-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+
+    /* Glass chrome */
+    --glass-bg:     rgba(255, 255, 255, 0.55);
+    --glass-border: rgba(15, 23, 42, 0.08);
+    --glass-blur:   16px;
+    --glass-shadow: 0 8px 28px rgba(15, 23, 42, 0.10);
+
+    /* Inputs */
+    --input-bg:          rgba(255, 255, 255, 0.70);
+    --input-border:      rgba(15, 23, 42, 0.12);
+    --input-text:        #0f172a;
+    --input-placeholder: rgba(15, 23, 42, 0.40);
+    --input-focus-bg:     rgba(255, 255, 255, 0.92);
+    --input-focus-border: rgba(2, 132, 199, 0.55);
+    --input-focus-ring:   rgba(2, 132, 199, 0.16);
+
+    /* Buttons */
+    --btn-bg:          rgba(255, 255, 255, 0.65);
+    --btn-border:      rgba(15, 23, 42, 0.12);
+    --btn-text:        #334155;
+    --btn-hover-bg:    rgba(255, 255, 255, 0.90);
+    --btn-hover-border: rgba(15, 23, 42, 0.22);
+    --btn-active-bg:   rgba(255, 255, 255, 0.50);
+    --btn-primary-bg:        rgba(2, 132, 199, 0.14);
+    --btn-primary-border:    rgba(2, 132, 199, 0.45);
+    --btn-primary-text:      #0369a1;
+    --btn-primary-hover-bg:  rgba(2, 132, 199, 0.24);
+    --btn-primary-hover-border: rgba(2, 132, 199, 0.65);
+    --btn-primary-hover-text: #075985;
+
+    /* Favorite chip */
+    --chip-bg:          rgba(2, 132, 199, 0.10);
+    --chip-border:      rgba(2, 132, 199, 0.30);
+    --chip-text:        #0369a1;
+    --chip-hover-bg:    rgba(2, 132, 199, 0.18);
+    --chip-hover-border: rgba(2, 132, 199, 0.50);
+    --chip-hover-text:  #075985;
+    --chip-active-bg:   rgba(2, 132, 199, 0.24);
+    --chip-active-border: rgba(2, 132, 199, 0.62);
+    --chip-active-text: #075985;
+
+    /* Toggle switch */
+    --toggle-on:  rgba(2, 132, 199, 0.85);
+    --toggle-off: rgba(15, 23, 42, 0.18);
+    --toggle-thumb: #ffffff;
+
+    /* Data table (high-contrast light) */
+    --table-bg:        #ffffff;
+    --table-text:      #0f172a;
+    --table-head-bg:   #eef2f7;
+    --table-head-text: #0f172a;
+    --table-head-border: rgba(15, 23, 42, 0.12);
+    --table-head-hover-bg: #e2e8f0;
+    --table-row-border: rgba(15, 23, 42, 0.07);
+    --table-row-hover:  #eef4fb;
+    --table-selected-bg: #e0efff;
+    --table-selected-bar: #0284c7;
+    --table-text-dim:   #475569;
+    --table-text-faint: #64748b;
+
+    /* Status badges (dark text on light tint — AA verified) */
+    --badge-clean-bg: #dcfce7;         --badge-clean-fg: #166534;
+    --badge-avoidable-bg: #fef9c3;     --badge-avoidable-fg: #854d0e;
+    --badge-mode-required-bg: #dbeafe; --badge-mode-required-fg: #1e40af;
+    --badge-difficult-bg: #fee2e2;     --badge-difficult-fg: #991b1b;
+    --badge-not-analyzable-bg: #ede9fe; --badge-not-analyzable-fg: #5b21b6;
+
+    /* Severity pills */
+    --sev-high-bg: #fee2e2;   --sev-high-fg: #991b1b;   --sev-high-border: rgba(185, 28, 28, 0.30);
+    --sev-medium-bg: #fef3c7; --sev-medium-fg: #854d0e; --sev-medium-border: rgba(180, 83, 9, 0.30);
+    --sev-low-bg: #e2e8f0;    --sev-low-fg: #334155;    --sev-low-border: rgba(71, 85, 105, 0.30);
+
+    /* Periodic-table category colors (light: light tint bg + dark fg, AA-conscious) */
+    --ptab-alkali-metal-bg: #f87171;          --ptab-alkali-metal-fg: #450a0a;
+    --ptab-alkaline-earth-bg: #fb923c;        --ptab-alkaline-earth-fg: #431407;
+    --ptab-transition-metal-bg: #fcd34d;      --ptab-transition-metal-fg: #451a03;
+    --ptab-post-transition-metal-bg: #cbd5e1; --ptab-post-transition-metal-fg: #1e293b;
+    --ptab-metalloid-bg: #5eead4;             --ptab-metalloid-fg: #042f2e;
+    --ptab-nonmetal-bg: #86efac;              --ptab-nonmetal-fg: #052e16;
+    --ptab-halogen-bg: #fde047;               --ptab-halogen-fg: #422006;
+    --ptab-noble-gas-bg: #7dd3fc;             --ptab-noble-gas-fg: #082f49;
+    --ptab-lanthanide-bg: #c4b5fd;            --ptab-lanthanide-fg: #2e1065;
+    --ptab-actinide-bg: #f0abfc;              --ptab-actinide-fg: #4a044e;
+    --ptab-cell-border: rgba(15, 23, 42, 0.28);
+  }
+
+  :root[data-theme="dark"] {
+    --app-gradient: linear-gradient(135deg, #0f172a 0%, #1e3a5f 40%, #0d2b45 70%, #0f172a 100%);
+    --orb-1: radial-gradient(circle, rgba(56, 189, 248, 0.07) 0%, transparent 70%);
+    --orb-2: radial-gradient(circle, rgba(99, 102, 241, 0.07) 0%, transparent 70%);
+
+    --text-strong:   rgba(255, 255, 255, 0.92);
+    --text:          rgba(255, 255, 255, 0.62);
+    --text-muted:    rgba(255, 255, 255, 0.42);
+    --text-faint:    rgba(255, 255, 255, 0.32);
+    --text-faintest: rgba(255, 255, 255, 0.25);
+
+    --accent:        #bae6fd;
+    --accent-strong: #7dd3fc;
+    --warn:          #fcd34d;
+    --err:           #fca5a5;
+    --violet:        #c4b5fd;
+    --pink:          #f9a8d4;
+    --border-app:    rgba(255, 255, 255, 0.10);
+    --surface-subtle: rgba(255, 255, 255, 0.05);
+    --surface-accent: rgba(56, 189, 248, 0.12);
+    --panel-bg:     #1e293b;
+    --panel-border: rgba(255, 255, 255, 0.12);
+    --panel-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+
+    --glass-bg:     rgba(255, 255, 255, 0.10);
+    --glass-border: rgba(255, 255, 255, 0.20);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.30);
+
+    --input-bg:          rgba(255, 255, 255, 0.07);
+    --input-border:      rgba(255, 255, 255, 0.18);
+    --input-text:        #ffffff;
+    --input-placeholder: rgba(255, 255, 255, 0.35);
+    --input-focus-bg:     rgba(255, 255, 255, 0.11);
+    --input-focus-border: rgba(56, 189, 248, 0.55);
+    --input-focus-ring:   rgba(56, 189, 248, 0.14);
+
+    --btn-bg:          rgba(255, 255, 255, 0.09);
+    --btn-border:      rgba(255, 255, 255, 0.18);
+    --btn-text:        rgba(255, 255, 255, 0.88);
+    --btn-hover-bg:    rgba(255, 255, 255, 0.16);
+    --btn-hover-border: rgba(255, 255, 255, 0.32);
+    --btn-active-bg:   rgba(255, 255, 255, 0.07);
+    --btn-primary-bg:        rgba(56, 189, 248, 0.18);
+    --btn-primary-border:    rgba(56, 189, 248, 0.40);
+    --btn-primary-text:      #bae6fd;
+    --btn-primary-hover-bg:  rgba(56, 189, 248, 0.28);
+    --btn-primary-hover-border: rgba(56, 189, 248, 0.60);
+    --btn-primary-hover-text: #ffffff;
+
+    --chip-bg:          rgba(56, 189, 248, 0.10);
+    --chip-border:      rgba(56, 189, 248, 0.28);
+    --chip-text:        #bae6fd;
+    --chip-hover-bg:    rgba(56, 189, 248, 0.20);
+    --chip-hover-border: rgba(56, 189, 248, 0.50);
+    --chip-hover-text:  #ffffff;
+    --chip-active-bg:   rgba(56, 189, 248, 0.28);
+    --chip-active-border: rgba(56, 189, 248, 0.65);
+    --chip-active-text: #ffffff;
+
+    --toggle-on:  rgba(56, 189, 248, 0.60);
+    --toggle-off: rgba(255, 255, 255, 0.15);
+    --toggle-thumb: #ffffff;
+
+    --table-bg:        #0f172a;
+    --table-text:      #e2e8f0;
+    --table-head-bg:   #1e293b;
+    --table-head-text: #f1f5f9;
+    --table-head-border: rgba(255, 255, 255, 0.10);
+    --table-head-hover-bg: #263248;
+    --table-row-border: rgba(255, 255, 255, 0.05);
+    --table-row-hover:  #1e293b;
+    --table-selected-bg: #1a3252;
+    --table-selected-bar: #38bdf8;
+    --table-text-dim:   #cbd5e1;
+    --table-text-faint: #94a3b8;
+
+    --badge-clean-bg: #14532d;         --badge-clean-fg: #86efac;
+    --badge-avoidable-bg: #713f12;     --badge-avoidable-fg: #fde68a;
+    --badge-mode-required-bg: #1e3a5f; --badge-mode-required-fg: #93c5fd;
+    --badge-difficult-bg: #450a0a;     --badge-difficult-fg: #fca5a5;
+    --badge-not-analyzable-bg: #1e1b3a; --badge-not-analyzable-fg: #c4b5fd;
+
+    --sev-high-bg: rgba(127, 29, 29, 0.5);  --sev-high-fg: #fca5a5;   --sev-high-border: rgba(185, 28, 28, 0.4);
+    --sev-medium-bg: rgba(120, 53, 15, 0.5); --sev-medium-fg: #fde68a; --sev-medium-border: rgba(180, 83, 9, 0.4);
+    --sev-low-bg: rgba(30, 41, 59, 0.7);    --sev-low-fg: #cbd5e1;    --sev-low-border: rgba(71, 85, 105, 0.4);
+
+    /* Periodic-table category colors (dark: deep bg + light fg) */
+    --ptab-alkali-metal-bg: #b91c1c;          --ptab-alkali-metal-fg: #fee2e2;
+    --ptab-alkaline-earth-bg: #c2410c;        --ptab-alkaline-earth-fg: #ffedd5;
+    --ptab-transition-metal-bg: #b45309;      --ptab-transition-metal-fg: #fef3c7;
+    --ptab-post-transition-metal-bg: #475569; --ptab-post-transition-metal-fg: #f1f5f9;
+    --ptab-metalloid-bg: #0f766e;             --ptab-metalloid-fg: #ccfbf1;
+    --ptab-nonmetal-bg: #15803d;              --ptab-nonmetal-fg: #dcfce7;
+    --ptab-halogen-bg: #a16207;               --ptab-halogen-fg: #fef9c3;
+    --ptab-noble-gas-bg: #0369a1;             --ptab-noble-gas-fg: #e0f2fe;
+    --ptab-lanthanide-bg: #6d28d9;            --ptab-lanthanide-fg: #ede9fe;
+    --ptab-actinide-bg: #a21caf;              --ptab-actinide-fg: #fae8ff;
+    --ptab-cell-border: rgba(255, 255, 255, 0.28);
+  }
+
+  html {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic',
+      system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    min-height: 100vh;
+    background: var(--app-gradient);
+    background-attachment: fixed;
+    position: relative;
+    color: var(--text);
+  }
+
+  /* Subtle ambient orbs */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: -10%;
+    width: 55%;
+    height: 55%;
+    border-radius: 50%;
+    background: var(--orb-1);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -20%;
+    right: -10%;
+    width: 55%;
+    height: 55%;
+    border-radius: 50%;
+    background: var(--orb-2);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #root {
+    position: relative;
+    z-index: 1;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  /* ── Semantic text / border helpers (theme-aware) ── */
+  .text-app-strong   { color: var(--text-strong); }
+  .text-app          { color: var(--text); }
+  .text-app-muted    { color: var(--text-muted); }
+  .text-app-faint    { color: var(--text-faint); }
+  .text-app-faintest { color: var(--text-faintest); }
+  .text-accent       { color: var(--accent); }
+  .text-accent-strong { color: var(--accent-strong); }
+  .table-dim         { color: var(--table-text-dim); }
+  .table-faint       { color: var(--table-text-faint); }
+  .text-warn         { color: var(--warn); }
+  .text-err          { color: var(--err); }
+  .text-violet-themed { color: var(--violet); }
+  .text-pink-themed  { color: var(--pink); }
+  .border-app        { border-color: var(--border-app); }
+  .surface-subtle    { background: var(--surface-subtle); }
+  .surface-accent    { background: var(--surface-accent); }
+  .surface-panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--panel-shadow);
+    border-radius: 1rem;
+  }
+
+  /* ── Glass chrome ── */
+  .glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    box-shadow: var(--glass-shadow);
+    border-radius: 1rem;
+  }
+
+  .glass-input {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 0.75rem;
+    color: var(--input-text);
+    outline: none;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .glass-input::placeholder {
+    color: var(--input-placeholder);
+  }
+
+  .glass-input:focus {
+    background: var(--input-focus-bg);
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 3px var(--input-focus-ring);
+  }
+
+  .glass-btn {
+    background: var(--btn-bg);
+    border: 1px solid var(--btn-border);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 0.75rem;
+    color: var(--btn-text);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .glass-btn:hover {
+    background: var(--btn-hover-bg);
+    border-color: var(--btn-hover-border);
+  }
+
+  .glass-btn:active {
+    background: var(--btn-active-bg);
+  }
+
+  .glass-btn-primary {
+    background: var(--btn-primary-bg);
+    border: 1px solid var(--btn-primary-border);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 0.75rem;
+    color: var(--btn-primary-text);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .glass-btn-primary:hover {
+    background: var(--btn-primary-hover-bg);
+    border-color: var(--btn-primary-hover-border);
+    color: var(--btn-primary-hover-text);
+  }
+
+  /* Favorite compound chip */
+  .fav-chip {
+    background: var(--chip-bg);
+    border: 1px solid var(--chip-border);
+    border-radius: 9999px;
+    color: var(--chip-text);
+    font-size: 0.8125rem;
+    padding: 0.2rem 0.75rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+
+  .fav-chip:hover {
+    background: var(--chip-hover-bg);
+    border-color: var(--chip-hover-border);
+    color: var(--chip-hover-text);
+  }
+
+  .fav-chip.active {
+    background: var(--chip-active-bg);
+    border-color: var(--chip-active-border);
+    color: var(--chip-active-text);
+  }
+
+  .fav-chip-delete {
+    opacity: 0.5;
+    font-size: 0.75rem;
+    line-height: 1;
+    transition: opacity 0.15s;
+  }
+
+  .fav-chip:hover .fav-chip-delete {
+    opacity: 0.9;
+  }
+
+  /* Toggle switch */
+  .toggle-track {
+    width: 2.25rem;
+    height: 1.25rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    padding: 0 0.1875rem;
+    flex-shrink: 0;
+  }
+
+  .toggle-track.on  { background: var(--toggle-on); }
+  .toggle-track.off { background: var(--toggle-off); }
+
+  .toggle-thumb {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 50%;
+    background: var(--toggle-thumb);
+    transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+  }
+
+  .toggle-track.on  .toggle-thumb { transform: translateX(1rem); }
+  .toggle-track.off .toggle-thumb { transform: translateX(0); }
+
+  /* ── Data table — HIGH CONTRAST (WCAG AA required) in both themes ──
+     Light: #0f172a text on #ffffff ≈ 17:1; dark: #e2e8f0 on #0f172a ≈ 14.5:1.
+     Badge/severity tints verified ≥4.5:1 (light, dark text on light tint) and
+     ≥5:1 (dark, light text on dark tint).
+  */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    background: var(--table-bg);
+    color: var(--table-text);
+  }
+
+  .data-table thead {
+    background: var(--table-head-bg);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .data-table thead th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--table-head-text);
+    white-space: nowrap;
+    user-select: none;
+    border-bottom: 1px solid var(--table-head-border);
+  }
+
+  .data-table thead th.sortable {
+    cursor: pointer;
+  }
+
+  .data-table thead th.sortable:hover {
+    background: var(--table-head-hover-bg);
+  }
+
+  .data-table tbody tr {
+    border-bottom: 1px solid var(--table-row-border);
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+
+  .data-table tbody tr:hover {
+    background: var(--table-row-hover);
+  }
+
+  .data-table tbody tr.selected {
+    background: var(--table-selected-bg);
+    border-left: 3px solid var(--table-selected-bar);
+  }
+
+  .data-table tbody tr.selected td:first-child {
+    padding-left: calc(1rem - 3px);
+  }
+
+  .data-table tbody td {
+    padding: 0.6875rem 1rem;
+    color: var(--table-text);
+    vertical-align: middle;
+  }
+
+  /* Status badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .badge-clean         { background: var(--badge-clean-bg);         color: var(--badge-clean-fg); }
+  .badge-avoidable     { background: var(--badge-avoidable-bg);     color: var(--badge-avoidable-fg); }
+  .badge-mode-required { background: var(--badge-mode-required-bg); color: var(--badge-mode-required-fg); }
+  .badge-difficult     { background: var(--badge-difficult-bg);     color: var(--badge-difficult-fg); }
+  .badge-not-analyzable { background: var(--badge-not-analyzable-bg); color: var(--badge-not-analyzable-fg); }
+
+  /* Severity pills */
+  .sev-high   { background: var(--sev-high-bg);   color: var(--sev-high-fg);   border: 1px solid var(--sev-high-border);   border-radius: 0.25rem; padding: 0 0.375rem; font-size: 0.75rem; }
+  .sev-medium { background: var(--sev-medium-bg); color: var(--sev-medium-fg); border: 1px solid var(--sev-medium-border); border-radius: 0.25rem; padding: 0 0.375rem; font-size: 0.75rem; }
+  .sev-low    { background: var(--sev-low-bg);    color: var(--sev-low-fg);    border: 1px solid var(--sev-low-border);    border-radius: 0.25rem; padding: 0 0.375rem; font-size: 0.75rem; }
+
+  /* Periodic-table cells (element picker) */
+  .ptab-cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 0.3rem;
+    border: 1px solid var(--ptab-cell-border);
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+  }
+  .ptab-cell:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  }
+  .ptab-cell .ptab-z {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    opacity: 0.75;
+  }
+  .ptab-cell .ptab-sym { font-size: 1.05rem; font-weight: 800; }
+  /* Disabled = non-measurable precursor (not a valid analyte) */
+  .ptab-cell:disabled { opacity: 0.32; cursor: not-allowed; filter: grayscale(0.4); }
+  /* Selected — unmistakable: thick ring + glow + lift, plus a check badge */
+  .ptab-cell.selected {
+    outline: 3px solid var(--accent-strong);
+    outline-offset: -2px;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.55), 0 4px 10px rgba(0, 0, 0, 0.28);
+    transform: translateY(-1px) scale(1.07);
+    z-index: 2;
+  }
+  .ptab-cell.selected .ptab-sym { font-weight: 900; }
+  .ptab-check {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 9999px;
+    background: var(--accent-strong);
+    color: #052e3f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+  }
+
+}
+
+/* Periodic-table category colors — defined OUTSIDE @layer on purpose.
+   These class names are built dynamically (ptab-${category}) so Tailwind's
+   content scanner never sees them as literals; inside @layer components they
+   were being PURGED, leaving the table cells with no background color.
+   Plain top-level CSS is passed through untouched. */
+.ptab-alkali-metal          { background: var(--ptab-alkali-metal-bg);          color: var(--ptab-alkali-metal-fg); }
+.ptab-alkaline-earth        { background: var(--ptab-alkaline-earth-bg);        color: var(--ptab-alkaline-earth-fg); }
+.ptab-transition-metal      { background: var(--ptab-transition-metal-bg);      color: var(--ptab-transition-metal-fg); }
+.ptab-post-transition-metal { background: var(--ptab-post-transition-metal-bg); color: var(--ptab-post-transition-metal-fg); }
+.ptab-metalloid             { background: var(--ptab-metalloid-bg);             color: var(--ptab-metalloid-fg); }
+.ptab-nonmetal              { background: var(--ptab-nonmetal-bg);              color: var(--ptab-nonmetal-fg); }
+.ptab-halogen               { background: var(--ptab-halogen-bg);               color: var(--ptab-halogen-fg); }
+.ptab-noble-gas             { background: var(--ptab-noble-gas-bg);             color: var(--ptab-noble-gas-fg); }
+.ptab-lanthanide            { background: var(--ptab-lanthanide-bg);            color: var(--ptab-lanthanide-fg); }
+.ptab-actinide              { background: var(--ptab-actinide-bg);              color: var(--ptab-actinide-fg); }

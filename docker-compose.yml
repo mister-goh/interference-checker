@@ -1,0 +1,23 @@
+# 개발용 Vite dev 서버 컨테이너.
+#   docker compose up        → http://localhost:5173 (HMR 동작)
+#   docker compose down      → 정리
+#
+# - 소스를 bind-mount 하여 코드 수정이 컨테이너에 즉시 반영(HMR).
+# - node_modules 는 named volume 로 격리 → 호스트(/mnt/c, glibc/Windows)와 컨테이너의
+#   esbuild/rollup 등 플랫폼별 네이티브 바이너리가 섞여 깨지는 것을 방지.
+#   (컨테이너 첫 기동 시 자체적으로 npm install 수행 → 컨테이너 플랫폼용 바이너리 설치)
+# - 파일 감지는 vite.config.ts 의 server.watch.usePolling 으로 처리(WSL/bind-mount 대응).
+services:
+  frontend:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    init: true                      # PID 1 시그널 포워딩 → Ctrl-C 깔끔한 종료
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app                      # 소스 bind-mount
+      - node_modules:/app/node_modules   # node_modules 격리(호스트와 분리)
+
+volumes:
+  node_modules:

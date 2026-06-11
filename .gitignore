@@ -6,6 +6,9 @@ dist/
 dist-offline/
 *.tsbuildinfo
 
+# Vite config 로딩 시 생기는 임시파일
+vite.config.ts.timestamp-*
+
 # 로컬 도구 설정 / 상태
 .omc/
 .claude/

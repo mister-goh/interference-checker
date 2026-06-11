@@ -26,17 +26,49 @@ export class FormulaParseError extends Error {
  * Parse a chemical formula string and return element symbol → atom count.
  * Throws FormulaParseError for malformed input.
  */
+/** Hydrate / adduct separators: center dot, bullet, asterisk, period. */
+const HYDRATE_SEP = /[·•*.]/;
+/** Trailing ionic charge, e.g. "+", "-", "^2-", "³⁺". A magnitude digit only
+ *  counts as charge when marked by a caret or written in superscript — so a bare
+ *  trailing count like the "4" in "NH4+" (or "O2") is never eaten. */
+const TRAILING_CHARGE = /(?:\^[0-9]*[+-]|[⁰¹²³⁴⁵⁶⁷⁸⁹]*[⁺⁻]|[+-])$/;
+
 export function parseFormula(formula: string): Composition {
   const trimmed = formula.trim();
   if (!trimmed) {
     throw new FormulaParseError('화학식을 입력해 주세요.');
   }
-  const [result, end] = parseGroup(trimmed, 0);
-  if (end !== trimmed.length) {
-    throw new FormulaParseError(
-      `화학식 파싱 오류: "${trimmed[end]}" 위치 ${end}에서 예상하지 못한 문자를 만났습니다.`
-    );
+
+  // Strip a trailing ionic charge — it does not affect element composition.
+  const noCharge = trimmed.replace(TRAILING_CHARGE, '').trim();
+  if (!noCharge) {
+    throw new FormulaParseError('인식된 원소가 없습니다. 화학식을 확인해 주세요.');
   }
+
+  // Split hydrates / adducts (e.g. "CuSO4·5H2O") and sum each segment.
+  const segments = noCharge
+    .split(HYDRATE_SEP)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  const result: Composition = {};
+  for (const seg of segments) {
+    // Optional leading integer coefficient, e.g. the "5" in "5H2O".
+    const [coef, afterCoef] = readNumber(seg, 0);
+    const multiplier = coef === 0 ? 1 : coef;
+    const body = seg.slice(afterCoef);
+    if (!body) {
+      throw new FormulaParseError(`화학식 파싱 오류: 계수 뒤에 원소가 없습니다 ("${seg}").`);
+    }
+    const [comp, end] = parseGroup(body, 0);
+    if (end !== body.length) {
+      throw new FormulaParseError(
+        `화학식 파싱 오류: "${body[end]}" 위치 ${end}에서 예상하지 못한 문자를 만났습니다.`
+      );
+    }
+    mergeInto(result, comp, multiplier);
+  }
+
   if (Object.keys(result).length === 0) {
     throw new FormulaParseError('인식된 원소가 없습니다. 화학식을 확인해 주세요.');
   }

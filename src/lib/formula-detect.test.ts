@@ -31,4 +31,13 @@ describe('looksLikeFormula', () => {
     expect(looksLikeFormula('123')).toBe(false);
     expect(looksLikeFormula('!!')).toBe(false);
   });
+
+  it('accepts hydrates and charged species', () => {
+    expect(looksLikeFormula('CuSO4·5H2O')).toBe(true);
+    expect(looksLikeFormula('Fe³⁺')).toBe(true);
+  });
+
+  it('rejects CAS numbers (handled by a separate route)', () => {
+    expect(looksLikeFormula('7440-23-5')).toBe(false);
+  });
 });

@@ -192,4 +192,33 @@ export const CURATED_INTERFERENCES: Interference[] = [
     severity: "high",
     source: "curated",
   },
+
+  // 40Ar2 1H+ triatomic → m/z 81 — interference on 81Br
+  // Not reachable by the pairwise two-atom engine; needs the Ar-dimer core.
+  // Product: (0.99600)^2 × 0.999885 × 100 = 99.19% → high
+  // Ref: Thomas [2] p.92; May & Wiedmeyer (1998) Atom. Spectrosc. 19, 150-155.
+  {
+    type: "polyatomic",
+    composition: "⁴⁰Ar₂¹H⁺",
+    targetMass: 81,
+    precursorElements: ["Ar", "H"],
+    precursorAbundanceProduct: 99.19,
+    severity: "high",
+    source: "curated",
+  },
+
+  // ── N2O+ triatomic (nitrogen-dimer core, not reachable by MO₂/MOH/Ar₂X) ──
+
+  // 14N14N16O+ → m/z 44 — interference on 44Ca (HNO3 / N-rich matrices)
+  // Product: (0.99636)^2 × 0.99757 × 100 = 99.03% → high
+  // Ref: Thomas [2] p.86; May & Wiedmeyer (1998) Atom. Spectrosc. 19, 150-155.
+  {
+    type: "polyatomic",
+    composition: "¹⁴N₂¹⁶O⁺",
+    targetMass: 44,
+    precursorElements: ["N", "O"],
+    precursorAbundanceProduct: 99.03,
+    severity: "high",
+    source: "curated",
+  },
 ];

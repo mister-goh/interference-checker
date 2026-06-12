@@ -28,22 +28,30 @@ import type { Interference, MatrixState, Severity } from '../types';
 import type { Composition } from './formula-parser';
 import { ISOTOPES } from '../data/isotopes';
 import { CURATED_INTERFERENCES } from '../data/curated-interferences';
+import { SECOND_IONIZATION_ENERGY, AR_FIRST_IONIZATION_EV } from '../data/ionization-energies';
+import { oxideFactorOf } from '../data/oxide-factors';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Elements eligible for M²⁺ doubly-charged interference generation.
- * Restricted to species with low second ionisation energies commonly observed
- * in ICP-MS literature (Ba, Sr, REE, Pb).
- * Ref: Jarvis (1992), Thomas (2013 3rd ed.).
+ * Whether an element forms appreciable doubly-charged ions (M²⁺) in the ICP.
+ *
+ * Physical criterion: M²⁺ forms when the element's SECOND ionization energy is
+ * below the FIRST ionization energy of argon (15.76 eV) — the charge-transfer
+ * reaction Ar⁺ + M → Ar + M²⁺ is then energetically favourable.
+ *
+ * This replaces the former hard-coded Ba/Sr/REE/Pb list with a data-driven
+ * criterion, which additionally captures Ca, Sc, Ti, V, Y, Zr, Nb, Sn, Hf, Th, U
+ * (all literature-recognised M²⁺ formers). Elements with no IE₂ datum default to
+ * non-formers (conservative).
+ * Ref: Thomas (2013 3rd ed.); Jarvis (1992). See src/data/ionization-energies.ts.
  */
-const DOUBLY_CHARGED_ELEMENTS = new Set([
-  'Ba', 'Sr',
-  'La', 'Ce', 'Pr', 'Nd', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu',
-  'Pb',
-]);
+function formsDoublyCharged(sym: string): boolean {
+  const ie2 = SECOND_IONIZATION_ENERGY[sym];
+  return ie2 !== undefined && ie2 < AR_FIRST_IONIZATION_EV;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Build lookup: elementSymbol → Isotope[]
@@ -113,6 +121,9 @@ export function generateInterferences(
 
   // 2b. Three-atom oxide species: metal dioxide MO₂⁺ and hydroxide MOH⁺
   generateOxideTriatomic(targetMass, activeElements, results, weights);
+
+  // 2c. Argon-dimer background triatomics: Ar₂X⁺ (X = active light matrix gas)
+  generateArgonDimerTriatomic(targetMass, activeElements, results, weights);
 
   // 3. Doubly-charged M²⁺ (even mass only, curated elements only)
   generateDoublyCharged(targetMass, activeElements, results, weights);
@@ -224,9 +235,16 @@ function generatePolyatomic(
 
           if (out.has(compositionStr)) continue;
 
+          // Oxide species (MO⁺): scale by the metal's oxide-formation tendency so
+          // implausible oxides (NaO⁺, ZnO⁺, …) are down-weighted. At most one of
+          // the pair is 'O' (homo-diatomic O₂ is curated, not generated here);
+          // matrix gases (Ar/N/C) default to factor 1 → unchanged.
+          const oxidePartner = symA === 'O' ? symB : symB === 'O' ? symA : null;
+          const oxideMult = oxidePartner ? oxideFactorOf(oxidePartner) : 1;
+
           const pct =
             (first.abundance / 100) * (second.abundance / 100) * 100 *
-            weightOf(weights, symA) * weightOf(weights, symB);
+            weightOf(weights, symA) * weightOf(weights, symB) * oxideMult;
           out.set(compositionStr, {
             type: 'polyatomic',
             composition: compositionStr,
@@ -306,7 +324,8 @@ function generateOxideTriatomic(
 
           const pct =
             (isoM.abundance / 100) * (oA.abundance / 100) * (oB.abundance / 100) * 100 *
-            weightOf(weights, sym) * weightOf(weights, 'O') * weightOf(weights, 'O');
+            weightOf(weights, sym) * weightOf(weights, 'O') * weightOf(weights, 'O') *
+            oxideFactorOf(sym);
           out.set(compositionStr, {
             type: 'polyatomic',
             composition: compositionStr,
@@ -331,12 +350,75 @@ function generateOxideTriatomic(
 
           const pct =
             (isoM.abundance / 100) * (o.abundance / 100) * (h.abundance / 100) * 100 *
-            weightOf(weights, sym) * weightOf(weights, 'O') * weightOf(weights, 'H');
+            weightOf(weights, sym) * weightOf(weights, 'O') * weightOf(weights, 'H') *
+            oxideFactorOf(sym);
           out.set(compositionStr, {
             type: 'polyatomic',
             composition: compositionStr,
             targetMass,
             precursorElements: [...new Set([sym, 'O', 'H'])],
+            precursorAbundanceProduct: pct,
+            severity: toSeverity(pct),
+            source: 'calculated',
+          });
+        }
+      }
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2c. Argon-dimer background triatomics — Ar₂X⁺
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Light matrix gases that pair with an Ar₂ core to form Ar₂X⁺ background ions. */
+const ARGON_DIMER_PARTNERS = ['H', 'C', 'N', 'O', 'Cl'] as const;
+
+/**
+ * Argon-dimer triatomics: Ar₂X⁺ where X is an active light matrix gas.
+ * These plasma-background ions (e.g. ⁴⁰Ar₂¹H⁺ → m/z 81 on ⁸¹Br, ⁴⁰Ar₂¹⁴N⁺ →
+ * m/z 94, ⁴⁰Ar₂¹⁶O⁺ → m/z 96) are not reachable by the pairwise two-atom engine.
+ *
+ * The display string uses the Ar-first convention ("⁴⁰Ar₂¹⁶O⁺"), matching the
+ * curated triatomic list so mergeCurated() overrides the calibrated entries
+ * (e.g. ⁴⁰Ar₂¹⁶O⁺ at m/z 96) with literature-precise values instead of leaving a
+ * duplicate. Ar is always active; Ar₃ (X=Ar) is omitted as negligible.
+ */
+function generateArgonDimerTriatomic(
+  targetMass: number,
+  activeElements: Set<string>,
+  out: Map<string, Interference>,
+  weights: ElementWeights,
+): void {
+  const arIsotopes = ISOTOPES_BY_ELEMENT.get('Ar') ?? [];
+
+  for (const X of ARGON_DIMER_PARTNERS) {
+    if (!activeElements.has(X)) continue;
+    const xIsotopes = ISOTOPES_BY_ELEMENT.get(X) ?? [];
+
+    // Unordered Ar pair (a ≤ b) so each isotope combination appears once.
+    for (let a = 0; a < arIsotopes.length; a++) {
+      for (let b = a; b < arIsotopes.length; b++) {
+        const arA = arIsotopes[a];
+        const arB = arIsotopes[b];
+        for (const x of xIsotopes) {
+          if (arA.massNumber + arB.massNumber + x.massNumber !== targetMass) continue;
+
+          const arPart =
+            arA.massNumber === arB.massNumber
+              ? `${fmtSpecies(arA.massNumber, 'Ar')}₂`
+              : `${fmtSpecies(arA.massNumber, 'Ar')}${fmtSpecies(arB.massNumber, 'Ar')}`;
+          const compositionStr = `${arPart}${fmtSpecies(x.massNumber, X)}⁺`;
+          if (out.has(compositionStr)) continue;
+
+          const pct =
+            (arA.abundance / 100) * (arB.abundance / 100) * (x.abundance / 100) * 100 *
+            weightOf(weights, 'Ar') * weightOf(weights, X);
+          out.set(compositionStr, {
+            type: 'polyatomic',
+            composition: compositionStr,
+            targetMass,
+            precursorElements: [...new Set(['Ar', X])],
             precursorAbundanceProduct: pct,
             severity: toSeverity(pct),
             source: 'calculated',
@@ -357,9 +439,9 @@ function generateDoublyCharged(
   out: Map<string, Interference>,
   weights: ElementWeights,
 ): void {
-  // The source element must be in the active pool AND in the curated set
+  // The source element must be in the active pool AND form M²⁺ (IE₂ criterion)
   for (const sym of activeElements) {
-    if (!DOUBLY_CHARGED_ELEMENTS.has(sym)) continue;
+    if (!formsDoublyCharged(sym)) continue;
 
     const isotopes = ISOTOPES_BY_ELEMENT.get(sym) ?? [];
     for (const iso of isotopes) {

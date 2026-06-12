@@ -33,8 +33,13 @@
  *   - Yb compound → Rb-85: ¹⁷⁰Yb²⁺ (high) → mode-required+DRC (no change)
  *   - Yb compound → Sr-88: ¹⁷⁶Yb²⁺ (high) → mode-required+DRC (no change)
  *   - Pb compound → Rh-103: ²⁰⁶Pb²⁺ (high) → mode-required+DRC (no change)
- *   - Ba, Sr, La, Eu, Gd, Dy, Er, Th, U compounds: no doubly-charged hits
- *     at any recommended mass in HNO3 matrix (no status change)
+ *
+ * NOTE (post IE₂-criterion update): the doubly-charged former set is no longer the
+ * hard-coded Ba/Sr/REE/Pb list — it is now derived from IE₂ < IE₁(Ar) (15.76 eV),
+ * which additionally makes Ca, Sc, Ti, V, Y, Zr, Nb, Sn, Hf, Th, U formers. So the
+ * earlier "Th/U compounds: no doubly-charged hits" note no longer holds (e.g.
+ * ²³²Th²⁺→m/z 116, ²³⁸U²⁺→m/z 119). None of these change the assertions below,
+ * which key on Ba/Ce/Pb-bearing compounds; they are verified to still pass.
  *
  * The Ce→Ga-69 correction is the only real behavioral delta under default caps.
  * It is verified by test (c) above (KED ON/DRC OFF + M²⁺ → not-analyzable)

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { ELEMENTS } from '../data/isotopes'
 import {
   PERIODIC_LAYOUT,
@@ -41,6 +41,7 @@ interface Props {
   selected: ReadonlySet<string>
   onToggle: (symbol: string) => void
   onClear: () => void
+  onConfirm?: () => void
   // When true, every element is selectable (incl. ICP-MS non-measurable ones
   // like Cl) — used when defining a compound by its constituent elements.
   allowAll?: boolean
@@ -82,7 +83,8 @@ function ElementCell({
  * Faithful group/period layout with category coloring. Non-measurable
  * precursor elements are shown but disabled. Controlled — parent owns the set.
  */
-export function ElementPicker({ selected, onToggle, onClear, allowAll = false }: Props) {
+export function ElementPicker({ selected, onToggle, onClear, onConfirm, allowAll = false }: Props) {
+  const [clearConfirmVisible, setClearConfirmVisible] = useState(false)
   const gridStyle = useMemo(
     () => ({ gridTemplateColumns: 'repeat(18, minmax(0, 1fr))' }),
     [],
@@ -92,16 +94,49 @@ export function ElementPicker({ selected, onToggle, onClear, allowAll = false }:
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <span className="text-app-muted text-xs">{selected.size}개 선택됨</span>
-        <button
-          type="button"
-          className="glass-btn px-3 py-1 text-xs"
-          onClick={onClear}
-          disabled={selected.size === 0}
-          style={selected.size === 0 ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
-        >
-          전체 해제
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="glass-btn px-3 py-1 text-xs"
+            onClick={() => setClearConfirmVisible(true)}
+            disabled={selected.size === 0}
+            style={selected.size === 0 ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+          >
+            전체 해제
+          </button>
+          {onConfirm && (
+            <button
+              type="button"
+              className="glass-btn-primary px-4 py-1 text-xs font-medium"
+              onClick={onConfirm}
+            >
+              확인
+            </button>
+          )}
+        </div>
       </div>
+
+      {clearConfirmVisible && (
+        <div className="flex items-center justify-between rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm">
+          <span className="text-app-strong">선택한 원소를 전체 해제하시겠습니까?</span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="glass-btn px-3 py-1 text-xs"
+              onClick={() => setClearConfirmVisible(false)}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="glass-btn px-3 py-1 text-xs text-red-400"
+              onClick={() => { onClear(); setClearConfirmVisible(false) }}
+            >
+              전체 해제
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Horizontal scroll on narrow screens; table keeps its proportions. */}
       <div className="overflow-x-auto pb-1">

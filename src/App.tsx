@@ -614,6 +614,7 @@ export default function App() {
                     selected={new Set(Object.keys(customCongeners))}
                     onToggle={handleToggleCustomCongener}
                     onClear={handleClearCustomCongeners}
+                    onConfirm={() => setIsCongenerPickerOpen(false)}
                   />
                 </div>
               </Modal>

@@ -9,6 +9,7 @@ import {
   PubChemError,
 } from '../lib/pubchem'
 import type { PubChemCompound } from '../lib/pubchem'
+import { Modal } from './Modal'
 import { resolveAlias, searchAliases } from '../data/compound-aliases'
 import type { CompoundAlias } from '../data/compound-aliases'
 import { parseFormula, FormulaParseError } from '../engine/formula-parser'
@@ -48,6 +49,7 @@ export function PubChemSearch({ onSelect, onRequestManualElements }: Props) {
   const [candidates, setCandidates] = useState<PubChemCompound[]>([])
   const [resolved, setResolved] = useState<PubChemCompound | null>(null)
   const [resolvedSource, setResolvedSource] = useState<ResolvedSource>('pubchem')
+  const [zoomCid, setZoomCid] = useState<number | null>(null)
 
   const wrapperRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -413,7 +415,7 @@ export function PubChemSearch({ onSelect, onRequestManualElements }: Props) {
       {/* Resolved compound result */}
       {resolved && (
         <div className="surface-subtle rounded-xl px-4 py-3 flex gap-3">
-          {resolved.cid > 0 && <StructureThumb cid={resolved.cid} />}
+          {resolved.cid > 0 && <StructureThumb cid={resolved.cid} onClick={() => setZoomCid(resolved.cid)} />}
           <div className="flex flex-col gap-2 flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 flex-wrap">
               <div className="flex flex-col gap-0.5">
@@ -473,23 +475,53 @@ export function PubChemSearch({ onSelect, onRequestManualElements }: Props) {
       >
         이 화합물로 설정
       </button>
+
+      {/* Enlarged structure popup */}
+      {zoomCid !== null && (
+        <Modal
+          onClose={() => setZoomCid(null)}
+          ariaLabel={`${resolved?.title ?? ''} 화학 구조`}
+          widthClass="max-w-xl"
+        >
+          <div className="p-6 flex flex-col items-center gap-3">
+            <img
+              src={structureImageUrl(zoomCid, true)}
+              alt="2D 화학 구조 (확대)"
+              className="w-full max-w-md aspect-square rounded-lg bg-white object-contain"
+            />
+            {resolved && (
+              <span className="text-app-muted text-sm text-center">
+                {resolved.title} · <span className="font-mono">{resolved.molecularFormula}</span> · CID {zoomCid}
+              </span>
+            )}
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
 
 // PubChem 2D structure thumbnail; hides itself if the image fails to load.
-function StructureThumb({ cid }: { cid: number }) {
+// Clicking opens an enlarged popup via the onClick callback.
+function StructureThumb({ cid, onClick }: { cid: number; onClick: () => void }) {
   const [failed, setFailed] = useState(false)
   if (failed) return null
   return (
-    <img
-      src={structureImageUrl(cid)}
-      alt="2D 구조"
-      width={96}
-      height={96}
-      loading="lazy"
-      onError={() => setFailed(true)}
-      className="w-24 h-24 rounded-lg bg-white object-contain shrink-0"
-    />
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="구조 확대"
+      className="shrink-0 rounded-lg cursor-pointer hover:ring-2 hover:ring-accent focus:outline-none focus:ring-2 focus:ring-accent transition"
+    >
+      <img
+        src={structureImageUrl(cid)}
+        alt="2D 구조"
+        width={96}
+        height={96}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        className="w-24 h-24 rounded-lg bg-white object-contain"
+      />
+    </button>
   )
 }

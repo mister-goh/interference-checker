@@ -133,7 +133,8 @@ export async function resolveByCas(cas: string, signal?: AbortSignal): Promise<P
   return compounds
 }
 
-/** PubChem 2D structure depiction (PNG) — usable directly as an <img> src. */
-export function structureImageUrl(cid: number): string {
-  return `${BASE}/pug/compound/cid/${cid}/PNG`
+/** PubChem 2D structure depiction (PNG) — usable directly as an <img> src.
+ *  Pass `large` for a higher-resolution depiction (e.g. zoomed-in view). */
+export function structureImageUrl(cid: number, large = false): string {
+  return `${BASE}/pug/compound/cid/${cid}/PNG${large ? '?image_size=large' : ''}`
 }

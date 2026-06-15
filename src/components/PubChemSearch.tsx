@@ -476,8 +476,9 @@ export function PubChemSearch({ onSelect, onRequestManualElements }: Props) {
         이 화합물로 설정
       </button>
 
-      {/* Enlarged structure popup */}
-      {zoomCid !== null && (
+      {/* Enlarged structure popup — portaled to body so the fixed overlay
+          escapes the glass card's containing block and covers the full viewport. */}
+      {zoomCid !== null && createPortal(
         <Modal
           onClose={() => setZoomCid(null)}
           ariaLabel={`${resolved?.title ?? ''} 화학 구조`}
@@ -495,7 +496,8 @@ export function PubChemSearch({ onSelect, onRequestManualElements }: Props) {
               </span>
             )}
           </div>
-        </Modal>
+        </Modal>,
+        document.body,
       )}
     </div>
   )
